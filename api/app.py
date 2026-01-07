@@ -23,20 +23,26 @@ def health():
 
 @app.get("/search/email")
 def search_by_email(email: str):
-    """
-    Search a single email lookup using _id)
-    """
     email = email.lower().strip()
 
-    try:
-        resp = os_client.get(
-            index=INDEX_NAME,
-            id=email,
-        )
-        return resp["_source"]
+    resp = os_client.search(
+        index=INDEX_NAME,
+        body={
+            "size": 1,
+            "query": {
+                "term": {
+                    "email.keyword": email
+                }
+            }
+        }
+    )
 
-    except Exception:
+    hits = resp["hits"]["hits"]
+    if not hits:
         raise HTTPException(status_code=404, detail="Email not found")
+
+    return hits[0]["_source"]
+
 
 
 @app.get("/search/domain")
